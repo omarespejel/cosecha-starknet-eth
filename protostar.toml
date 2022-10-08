@@ -5,6 +5,20 @@ protostar_version = "0.5.0"
 libs_path = "lib"
 
 ["protostar.contracts"]
-main = [
-    "src/main.cairo",
+registerDocument = [
+    "src/registerDocument.cairo",
 ]
+
+# https://github.com/Shard-Labs/starknet-devnet
+[profile.devnet.protostar.deploy]
+gateway-url="http://127.0.0.1:5050/"
+chain-id="1"
+
+[profile.testnet.protostar.deploy]
+network="testnet"
+
+[profile.mainnet.protostar.deploy]
+network="alpha-mainnet"
+
+["protostar.shared_command_configs"]
+cairo-path = ["lib/cairo_contracts/src"]
