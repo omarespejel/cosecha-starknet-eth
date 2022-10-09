@@ -1,6 +1,5 @@
 %lang starknet
 
-
 from starkware.cairo.common.uint256 import Uint256, uint256_add
 from starkware.starknet.common.syscalls import get_caller_address
 from starkware.cairo.common.cairo_builtins import HashBuiltin
@@ -84,70 +83,28 @@ func get_user_info{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_p
 // ------
 
 @external
-func create_collectible{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
-    // password: felt
-) {
-
-    // with_attr error_message("Create Collectible: Wrong password") {
-    //     assert PASSWORD = password;
-    // }
-
-    let (requestID: felt) = request_rng();
-    let (caller_address: felt) = get_caller_address();
+func register_yourself{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
+    name: felt, last_name: felt, id_cedula: felt, application_number: felt
+) -> () {
+    alloc_locals;
     
-    request_id_to_sender.write(requestID, caller_address);
-    // request_id_to_tokenURI.write(requestID, tokenURI);
-    return();
-}
+    //  Register user
+    local user_info : UserInfo;
+    
+    assert user_info.name=name;
+    assert user_info.last_name=last_name;
+    assert user_info.id_cedula=id_cedula;
+    assert user_info.application_number=register_number;
+    assert user_info.already_approved=0;
+    assert user_info.licence_number=0;
+    assert user_info.accepting_collaborations=0;
 
-@external
-func register_yourself{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
-    name: felt, last_name: felt, id_cedula: felt, application_number: felt
-) -> () {
-
-    let user_info : UserInfo = UserInfo(
-                                    name=name,
-                                    last_name=last_name,
-                                    id_cedula=id_cedula,
-                                    application_number=register_number,
-                                    already_approved=0,
-                                    licence_number=0,
-                                    accepting_collaborations=0
-                                    );
-
+    // Store user info
     let (caller_address: felt) = get_caller_address();
-
-    id_to_user_info.write(UserInfo.id_cedula, user_info);
-
-    // Update new tokenID
-    let last_token : Uint256 = token_counter.read();
-    let one_uint : Uint256 = Uint256(1,0);
-    let (new_tokenID, _ ) = uint256_add(a=last_token, b=one_uint);
-    token_counter.write(new_tokenID);
-
-    // Mint
-    ERC721._mint(to=caller_address, token_id=new_tokenID);
-
-    return();
-}
-
-@external
-func register_yourself{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
-    name: felt, last_name: felt, id_cedula: felt, application_number: felt
-) -> () {
-
-    let user_info : UserInfo = UserInfo(
-                                    name=name,
-                                    last_name=last_name,
-                                    id_cedula=id_cedula,
-                                    application_number=register_number,
-                                    already_approved=0,
-                                    licence_number=0,
-                                    accepting_collaborations=0
-                                    );
-
-    let (caller_address: felt) = get_caller_address();
+    id_to_user_info.write(user_info.id_cedula, user_info);
     address_to_user_info.write(caller_address, user_info);
+
+    // TODO: do not allowed previously registered individuals to register again
 
     // Update new tokenID
     let last_token : Uint256 = token_counter.read();
@@ -165,15 +122,22 @@ func register_yourself{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_che
 func got_my_license_approved{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
     licence_number: felt, accepting_collaborations: felt
 ) {
+    alloc_locals;
     // TODO - check user is registered
 
     // Change user info to reflect the approval of the license
     let (caller_address: felt) = get_caller_address();
     let user_info : UserInfo = address_to_user_info.read(caller_address);
 
-    user_info.already_approved = 1;
-    user_info.licence_number = licence_number;
-    user_info.accepting_collaborations = accepting_collaborations;
-    address_to_user_info.write(caller_address, user_info);
+    local new_user_info : UserInfo;
+    assert new_user_info.name=user_info.name;
+    assert new_user_info.last_name=user_info.last_name;
+    assert new_user_info.id_cedula=user_info.id_cedula;
+    assert new_user_info.application_number=user_info.register_number;
+    assert new_user_info.already_approved=1;
+    assert new_user_info.licence_number=licence_number;
+    assert new_user_info.accepting_collaborations=accepting_collaborations;
+
+    id_to_user_info.write(new_user_info.id_cedula, new_user_info);
     
 }
